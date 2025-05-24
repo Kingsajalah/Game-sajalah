@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Slot Machine + Uang + Suara</title>
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    .machine {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .cell {
+      font-size: 50px;
+      background: #222;
+      border: 3px solid #fff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 0.2s ease-in-out;
+    }
+
+    .spinning {
+      animation: spin 0.3s infinite;
+    }
+
+    @keyframes spin {
+      0%   { transform: rotateX(0); }
+      50%  { transform: rotateX(180deg); }
+      100% { transform: rotateX(360deg); }
+    }
+
+    @keyframes pulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    button {
+      font-size: 20px;
+      padding: 12px 30px;
+      border: none;
+      background: #0f0;
+      color: #000;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    #result, #money {
+      font-size: 24px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Slot Machine 3x3 + Uang + Suara</h1>
+
+  <div id="money">Saldo: Rp 10.000</div>
+
+  <div class="machine" id="grid">
+    <div class="cell" id="c0">🈴</div>
+    <div class="cell" id="c1">❤️</div>
+    <div class="cell" id="c2">♠️</div>
+    <div class="cell" id="c3">♦️</div>
+    <div class="cell" id="c4">⭐</div>
+    <div class="cell" id="c5">7️⃣</div>
+    <div class="cell" id="c6">🍒</div>
+    <div class="cell" id="c7">♣️</div>
+    <div class="cell" id="c8">🍊</div>
+  </div>
+
+  <button onclick="startSpin()">SPIN (Rp 1.000)</button>
+
+  <div id="result"></div>
+
+  <!-- Suara -->
+  <audio id="spinSound" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
+  <audio id="winSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-01.mp3" preload="auto"></audio>
+
+  <script>
+    const symbols = ['🈴', '♠️', '♦️', '❤️', '⭐', '7️⃣', '♣️'];
+    const cells = Array.from({length: 9}, (_, i) => document.getElementById('c' + i));
+    const spinSound = document.getElementById('spinSound');
+    const winSound = document.getElementById('winSound');
+
+    let spinning = false;
+    let saldo = 10000;
+
+    function getRandomSymbol() {
+      return symbols[Math.floor(Math.random() * symbols.length)];
+    }
+
+    function updateMoneyDisplay() {
+      document.getElementById('money').textContent = 'Saldo: Rp ' + saldo.toLocaleString();
+    }
+
+    function startSpin() {
+      if (spinning || saldo < 1.000) {
+        document.getElementById('result').textContent = saldo < 1.000
+          ? 'Saldo tidak cukup!'
+          : '';
+        return;
+      }
+
+      saldo -= 10.000;
+      updateMoneyDisplay();
+      spinning = true;
+      document.getElementById('result').textContent = '';
+      spinSound.play();
+
+      cells.forEach(cell => cell.classList.add('spinning'));
+
+      const spinInterval = setInterval(() => {
+        cells.forEach(cell => {
+          cell.textContent = getRandomSymbol();
+        });
+      }, 100);
+
+      setTimeout(() => {
+        clearInterval(spinInterval);
+        cells.forEach(cell => {
+          cell.textContent = getRandomSymbol();
+          cell.classList.remove('spinning');
+        });
+
+        const menang = checkWin();
+        if (menang) {
+          saldo += 10.000;
+          updateMoneyDisplay();
+          winSound.play();
+        }
+        spinning = false;
+      }, 2000);
+    }
+
+    function checkWin() {
+      const grid = cells.map(c => c.textContent);
+      const wins = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+      ];
+
+      const win = wins.find(line =>
+        grid[line[0]] === grid[line[1]] && grid[line[1]] === grid[line[2]]
+      );
+
+      if (win) {
+        document.getElementById('result').textContent = 'JACKPOT! +Rp 10.000';
+        return true;
+      } else {
+        document.getElementById('result').textContent = 'Gagal, -Rp 1.000';
+        return false;
+      }
+    }
+
+    updateMoneyDisplay();
+  </script>
+
+</body>
+</html>
+

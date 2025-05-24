@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Demo Login</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #222;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+  .login-container {
+    background: #333;
+    padding: 2rem;
+    border-radius: 10px;
+    width: 300px;
+  }
+  h2 {
+    text-align: center;
+  }
+  label {
+    display: block;
+    margin-top: 1rem;
+  }
+  input[type="text"],
+  input[type="password"] {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.2rem;
+    border: none;
+    border-radius: 5px;
+  }
+  button {
+    margin-top: 1.5rem;
+    width: 100%;
+    padding: 0.7rem;
+    border: none;
+    border-radius: 5px;
+    background: #4CAF50;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .message {
+    margin-top: 1rem;
+    text-align: center;
+    font-weight: bold;
+  }
+  .success {
+    color: #4CAF50;
+  }
+  .error {
+    color: #f44336;
+  }
+</style>
+</head>
+<body>
+  
+  <div class="login-container">
+    <h2>Login untuk masuk ke dalam game</h2>
+    <form id="loginForm">
+      <label for="username">Username:</label>
+      <input type="text" id="username" autocomplete="off" required />
+      
+      <label for="password">Password:</label>
+      <input type="password" id="password" autocomplete="off" required />
+      
+      <button type="submit">Login</button>
+    </form>
+    <div class="message" id="message"></div>
+    <h1>loginkan username & password di bawah</h1>
+    <p>username: sajalah</p><br>
+  <p>password: 1</p>
+  </div>
+<script>
+  const loginForm = document.getElementById('loginForm');
+  const messageDiv = document.getElementById('message');
+
+  // Kredensial yang sudah ditentukan untuk demo
+  const correctUsername = "sajalah";
+  const correctPassword = "1";
+
+  loginForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const username = loginForm.username.value.trim();
+    const password = loginForm.password.value.trim();
+
+    if (username === correctUsername && password === correctPassword) {
+      messageDiv.textContent = "Login sukses! Selamat datang, " + username + ".mengalihkan ke halaman utama";
+      messageDiv.className = "message success";
+      loginForm.reset();
+
+      // Tunggu 2 detik lalu pindah tab (ganti URL sesuai kebutuhan)
+      setTimeout(() => {
+        // Pilihan 1: Redirect di tab ini
+        // window.location.href = 'halaman-utama.html';
+
+        // Pilihan 2: Buka tab baru dan tutup tab ini (opsional)
+        // const newTab = window.open('halaman-utama.html', '_blank');
+        // window.close();
+
+        // Contoh menggunakan redirect tab ini:
+        window.location.href = 'loading.html';
+      }, 2000);
+
+    } else {
+      messageDiv.textContent = "Username atau password salah!";
+      messageDiv.className = "message error";
+    }
+  });
+</script>
+</body>
+</html>
+
+

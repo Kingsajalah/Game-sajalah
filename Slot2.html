@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Slot Mahjong Final</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      background-image: url('p.jpg');
+      height: 600px;
+      background-position: center;
+      background-size: 120% 180%;
+      
+    }
+    .slot-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+    .slot {
+      width: 80px;
+      height: 80px;
+      margin: 10px;
+      border: 3px solid white;
+      font-size: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      border-radius: 8px;
+      transition: transform 0.2s ease;
+    }
+    .glow {
+      animation: glow 1s ease-in-out infinite alternate;
+      border-color: gold;
+      box-shadow: 0 0 15px gold;
+    }
+    @keyframes glow {
+      from { box-shadow: 0 0 5px gold; }
+      to { box-shadow: 0 0 20px gold; }
+    }
+    .jackpot {
+      animation: jackpotFlash 0.3s infinite;
+    }
+    @keyframes jackpotFlash {
+      0% { background-color: yellow; }
+      50% { background-color: red; color: white; }
+      100% { background-color: yellow; }
+    }
+    button {
+      padding: 12px 40px;
+      font-size: 18px;
+      margin: 10px;
+      cursor: pointer;
+    }
+    .message {
+      font-size: 20px;
+      margin-top: 15px;
+      color: green;
+    }
+    .credit {
+      font-size: 20px;
+      margin-top: 10px;
+      color: #333;
+    }
+    .values {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    .freespin-alert {
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: gold;
+      color: black;
+      padding: 20px 40px;
+      border-radius: 20px;
+      font-size: 32px;
+      font-weight: bold;
+      box-shadow: 0 0 20px gold;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      z-index: 999;
+    }
+    .freespin-alert.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <h1>Slot Mahjong - FINAL VERSION</h1>
+  <div class="credit" id="credit">Kredit: 10.000</div>
+  <div class="credit" id="freespin">Free Spins: 0</div>
+
+  <div class="values">
+    <strong>Nilai Simbol:</strong><br>
+    🀄: 30 | 🀇: 20 | 🀈: 15 | 🀉: 10 | 🀊: 8 | 🀋: 5<br>
+    🤖 (SCATTER AI): 3x atau lebih → +50 kredit/simbol + 5 Free Spins<br>
+    JACKPOT: Semua simbol sama → +200 kredit!
+  </div>
+
+  <div class="slot-container" id="slots"></div>
+
+  <button onclick="spin()">Spin (-5.00 Kredit)</button>
+  <button onclick="toggleAutoSpin()" id="autoBtn">Auto Spin</button>
+
+  <div class="message" id="message"></div>
+  <div class="freespin-alert" id="freespinAlert">+5 FREE SPINS!</div>
+
+  <!-- AUDIO -->
+  <audio id="spinSound" src="https://www.soundjay.com/misc/sounds/button-16.mp3"></audio>
+  <audio id="reelSound" src="https://www.fesliyanstudios.com/play-mp3/387" loop></audio>
+  <audio id="winSound" src="https://www.soundjay.com/human/sounds/applause-8.mp3"></audio>
+  <audio id="freespinSound" src="https://www.fesliyanstudios.com/play-mp3/3879"></audio>
+  <audio id="jackpotSound" src="https://www.fesliyanstudios.com/play-mp3/6961"></audio>
+
+  <script>
+    const symbols = ["🀄", "🀇", "🀈", "🀉", "🀊", "🀋", "🤖"];
+    const symbolValues = {
+      "🀄": 30, "🀇": 20, "🀈": 15,
+      "🀉": 10, "🀊": 8,  "🀋": 5
+    };
+    const totalSlots = 12;
+    let credit = 10.000;
+    let freeSpins = 0;
+    let autoSpin = false;
+    let autoSpinInterval = null;
+
+    const container = document.getElementById("slots");
+    const spinSound = document.getElementById("spinSound");
+    const reelSound = document.getElementById("reelSound");
+    const winSound = document.getElementById("winSound");
+    const freespinSound = document.getElementById("freespinSound");
+    const jackpotSound = document.getElementById("jackpotSound");
+
+    for (let i = 1; i <= totalSlots; i++) {
+      const div = document.createElement("div");
+      div.className = "slot";
+      div.id = "slot" + i;
+      div.textContent = "?";
+      container.appendChild(div);
+    }
+
+    function updateCredit() {
+      document.getElementById("credit").textContent = "Kredit: " + credit;
+    }
+
+    function updateFreeSpin() {
+      document.getElementById("freespin").textContent = "Free Spins: " + freeSpins;
+    }
+
+    function showFreeSpinAlert() {
+      const alertBox = document.getElementById("freespinAlert");
+      alertBox.classList.add("show");
+      setTimeout(() => alertBox.classList.remove("show"), 2500);
+    }
+
+    function toggleAutoSpin() {
+      autoSpin = !autoSpin;
+      const btn = document.getElementById("autoBtn");
+      if (autoSpin) {
+        btn.textContent = "Stop Auto";
+        autoSpinInterval = setInterval(() => {
+          spin();
+        }, 2000);
+      } else {
+        btn.textContent = "Auto Spin";
+        clearInterval(autoSpinInterval);
+      }
+    }
+
+    function spin() {
+      if (credit < 10.000 && freeSpins <= 0) {
+        alert("Kredit tidak cukup!");
+        toggleAutoSpin();
+        return;
+      }
+
+      if (freeSpins > 0) {
+        freeSpins--;
+        updateFreeSpin();
+      } else {
+        credit -= 10;
+        updateCredit();
+      }
+
+      document.getElementById("message").innerHTML = "";
+      const result = [];
+      spinSound.play();
+      reelSound.play();
+
+      let count = 0;
+      const interval = setInterval(() => {
+        for (let i = 1; i <= totalSlots; i++) {
+          const rand = Math.floor(Math.random() * symbols.length);
+          const symbol = symbols[rand];
+          const slot = document.getElementById("slot" + i);
+          slot.textContent = symbol;
+          slot.style.transform = "scale(1.2)";
+          setTimeout(() => (slot.style.transform = "scale(1)"), 1000);
+          result[i - 1] = symbol;
+        }
+        count++;
+        if (count >= 10) {
+          clearInterval(interval);
+          reelSound.pause();
+          reelSound.currentTime = 0;
+          checkWin(result);
+        }
+      }, 100);
+    }
+
+    function checkWin(result) {
+      const message = document.getElementById("message");
+      const counts = {};
+      let maxCount = 0;
+      let winningSymbol = "";
+
+      result.forEach((sym) => {
+        counts[sym] = (counts[sym] || 0) + 1;
+        if (sym !== "🤖" && counts[sym] > maxCount) {
+          maxCount = counts[sym];
+          winningSymbol = sym;
+        }
+      });
+
+      let totalReward = 0;
+
+      if (counts["🤖"] >= 3) {
+        const scatterReward = counts["🤖"] * 50;
+        totalReward += scatterReward;
+        freeSpins += 5;
+        updateFreeSpin();
+        message.innerHTML += `SCATTER AI! 🤖 x${counts["🤖"]} → +${scatterReward} kredit + 5 Free Spins!<br>`;
+        winSound.play();
+        freespinSound.play();
+        showFreeSpinAlert();
+        for (let i = 1; i <= totalSlots; i++) {
+          const slot = document.getElementById("slot" + i);
+          if (slot.textContent === "🤖") {
+            slot.classList.add("glow");
+            setTimeout(() => slot.classList.remove("glow"), 3000);
+          }
+        }
+      }
+
+      if (maxCount >= 3) {
+        const reward = symbolValues[winningSymbol] * maxCount;
+        totalReward += reward;
+        message.innerHTML += `Menang! ${maxCount} simbol '${winningSymbol}' → +${reward} kredit<br>`;
+        winSound.play();
+      }
+
+      const nonScatterUnique = result.filter(s => s !== "🤖");
+      const uniqueNonScatter = new Set(nonScatterUnique);
+      if (uniqueNonScatter.size === totalSlots - (counts["🤖"] || 0)) {
+        const bonus = 15;
+        totalReward += bonus;
+        message.innerHTML += `Unik! Simbol non-scatter semua berbeda → +${bonus} kredit<br>`;
+        winSound.play();
+      }
+
+      const nonScatters = result.filter(s => s !== "🤖");
+      const isJackpot = nonScatters.length === totalSlots && new Set(nonScatters).size === 1;
+      if (isJackpot) {
+        message.innerHTML = "<strong>JACKPOT!!!</strong> Semua simbol sama! +200 kredit";
+        credit += 200;
+        jackpotSound.play();
+        for (let i = 1; i <= totalSlots; i++) {
+          const slot = document.getElementById("slot" + i);
+          slot.classList.add("jackpot");
+          setTimeout(() => slot.classList.remove("jackpot"), 2000);
+        }
+      }
+
+      if (totalReward === 0 && !isJackpot) {
+        message.textContent = "Coba lagi!";
+      } else {
+        credit += totalReward;
+      }
+
+      updateCredit();
+    }
+  </script>
+</body>
+</html>
